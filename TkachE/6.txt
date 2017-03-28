@@ -1,0 +1,2 @@
+SELECT * FROM v$parameter wHerE name='log_checkpoint_interval';
+alter system set log_checkpoint_interval=150 scope=BOTH;

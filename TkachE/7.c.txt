@@ -1,0 +1,9 @@
+create table TestTable01 (a number, b varchar2(10));
+insert into TestTable01 values (14, 'abc');
+select * from TestTable01;
+Видим что строка добавилась в таблицу (НЕ коммитим изменения).
+shutdown immediate
+startup mount
+alter database open 
+select * from TestTable01;
+Видим что строка (14, 'abc') отсутствует.
