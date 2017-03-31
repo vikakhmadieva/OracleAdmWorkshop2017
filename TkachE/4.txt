@@ -1,0 +1,16 @@
+SQL> select * from V$INSTANCE;       
+
+INSTANCE_NUMBER INSTANCE_NAME
+--------------- ----------------
+HOST_NAME
+----------------------------------------------------------------
+VERSION 	  STARTUP_T STATUS	 PAR	THREAD# ARCHIVE LOG_SWITCH_WAIT
+----------------- --------- ------------ --- ---------- ------- ---------------
+LOGINS	   SHU DATABASE_STATUS	 INSTANCE_ROLE	    ACTIVE_ST BLO
+---------- --- ----------------- ------------------ --------- ---
+	      1 JTA
+tatuuin
+11.2.0.1.0	  13-MAR-17 OPEN	 NO	      1 STOPPED
+ALLOWED    NO  ACTIVE		 PRIMARY_INSTANCE   NORMAL    NO
+
+

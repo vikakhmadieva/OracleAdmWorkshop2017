@@ -1,0 +1,9 @@
+SELECT * FROM v$parameter wHerE name='log_checkpoint_interval';
+alter system set log_checkpoint_interval=150 scope=BOTH;
+create tablE test(a number, b varchar2(10));
+
+SELECT tablespace_name, file_name, bytes FROM dba_data_files ORDER BY tablespace_name, file_name;
+SELECT * FROM dba_tablespaces;
+CREATE tablespace users2 daTaFILE '/u01/app/oracle/oradata/JTA/Myusers02.dbf' SIZE 100M;
+CREATE TEMPORARY tablespace TEMP1 TEMPFILE '/u01/app/oracle/oradata/JTA/Mytemp01.dbf' SIZE 100M;
+CREATE USER DUMMY IDENTIFIED BY DUMB DEFAULT TABLESPACE users2 TEMPORARY TABLESPACE TEMP;

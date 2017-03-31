@@ -1,0 +1,28 @@
+До этого были созданы такие табличные пространства:
+CREATE tablespace users2 daTaFILE '/u01/app/oracle/oradata/JTA/Myusers02.dbf' SIZE 100M;
+CREATE TEMPORARY tablespace TEMP1 TEMPFILE '/u01/app/oracle/oradata/JTA/Mytemp01.dbf' SIZE 100M;
+
+////////////////////
+Сначала создадим профиль для первого пользователя без ограничений по времени сессии и количеству сессий:
+CREATE PROFILE DUMMYS1_PROFILE LIMIT CONNECT_TIME UNLIMITED IDLE_TIME UNLIMITED SESSIONS_PER_USER UNLIMITED;
+
+Для выдачи права на просмотр словаря данных нужно дать специальную роль select_catalog_role пользователю
+grant select_catalog_role to DUMMY1;
+
+Создаём первого пользователя
+CREATE USER DUMMY1 IDENTIFIED BY DUMB01 DEFAULT TABLESPACE users2 TEMPORARY TABLESPACE TEMP QUOTA 0 ON users2;
+grant CREATE_SESSION to DUMMY1;
+grant CONNECT to DUMMY1;
+alter user DUMMY1 profile DUMMYS1_PROFILE;
+
+////////////////////
+Cоздадим профиль для второго пользователя с ограничением в 15 мин простоя сессии:
+CREATE PROFILE DUMMYS2_PROFILE LIMIT IDLE_TIME 15 SESSIONS_PER_USER 2;
+
+Создаём второго пользователя
+CREATE USER DUMMY2 IDENTIFIED BY DUMB02 DEFAULT TABLESPACE users2 TEMPORARY TABLESPACE TEMP QUOTA 50M ON users2;
+grant CREATE_SESSION to DUMMY2;
+grant CONNECT to DUMMY2;
+
+
+
