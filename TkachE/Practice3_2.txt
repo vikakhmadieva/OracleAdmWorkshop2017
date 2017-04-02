@@ -1,0 +1,35 @@
+http://citforum.ru/database/oracle/deadlock/3.shtml
+/* Создадим взаимную блокировку связанную с наложением значений первичного или уникального ключа при вставке. */
+/* TestUser2: */
+CREATE TABLE t1 (c1 NUMBER PRIMARY KEY, c2 VARCHAR2(50));
+GRANT insert ON t1 TO TestUser1;
+GRANT select ON t1 TO TestUser1;
+
+/* TestUser1: */
+INSERT INTO TestUser2.t1 (c1, c2) VALUES(1, 'Строка1');
+
+/* TestUser2: */
+INSERT INTO t1 (c1, c2) VALUES(2, 'Строка2');
+
+/* В результате выполненных выше действий в каждом из сеансов нами были установлены по одной транзакционной блокировке. Теперь в сеансе пользователя TestUser1 попытаемся  вставить  строку с ключом 2. В связи с тем, что таблица t1 имеет ограничение первичного ключа, и строка с таким же значением данного ключа уже вставлена в незавершённой транзакции второго сеанса, выполнение этого оператора должно привести к ожиданию. */
+INSERT INTO TestUser2.t1 (c1, c2) VALUES(2, 'Строка2');
+
+/* Посмотрим SID'ы наших сессий и заглянем в системное представление v$lock */
+select * from v$session order by username;
+SELECT * FROM v$lock WHERE sid IN (145, 20) AND type = 'TX';
+
+/* Теперь вторым сеансом попытаемся вставить строку со значением первичного ключа, равным единице: */
+INSERT INTO t1 (c1, c2) VALUES(1, 'Строка1');
+
+/* Так как первый сеанс уже ранее вставил в таблицу строку с данным значением первичного ключа и выставил на строку индекса TX-блокировку в исключительном режиме, второй сеанс должен ждать освобождения этой блокировки. В тоже время первый сеанс уже ожидает окончания транзакции во втором сеансе и, следовательно, не может освободить эту блокировку. В результате у нас снова образуется бесконечное ожидание, которое приводит в первом сеансе к исключению:
+Error starting at line : 6 in command -
+INSERT INTO TestUser2.t1 (c1, c2) VALUES(2, 'Строка2')
+Error report -
+SQL Error: ORA-00060: deadlock detected while waiting for resource
+00060. 00000 -  "deadlock detected while waiting for resource"
+*Cause:    Transactions deadlocked one another while waiting for resources.
+*Action:   Look at the trace file to see the transactions and resources
+           involved. Retry if necessary. 
+Взаимная блокировка произошла. Выдержка из файла /u01/app/oracle/diag/rdbms/jta/JTA/trace/alert_JTA.log:
+Sun Apr 02 16:49:15 2017
+ORA-00060: Deadlock detected. More info in file /u01/app/oracle/diag/rdbms/jta/JTA/trace/JTA_ora_56508.trc. */
