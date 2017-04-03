@@ -1,0 +1,183 @@
+4. доказать работу экземпляра: вывод из представления словаря данных V$
+
+select * from V$INSTANCE;  
+
+INSTANCE_NUMBER 	1
+INSTANCE_NAME 		MAX
+HOST_NAME 		tatuuin 
+VERSION 		11.2.0.1.0
+STARTUP_TIME 		23-MAR-17
+STATUS 			OPEN
+PARALLEL 		NO	
+THREAD 			1
+ARCHIVER 		STOPPED		
+LOG_SWITCH_WAIT  	(null)
+LOGINS 			ALLOWED		
+SHUTDOWN_PENDING 	NO	
+DATABASE_STATUS 	ACTIVE	
+INSTATNCE_ROLE 		PRIMARY_INSTANCE	
+ACTIVE_STATE 		NORMAL	
+BLOCKED 		NO
+
+----------------------------------------------------------------------------------
+5. создать SPFILE для экземпляра
+
+spfileMAX
+----------------------------------------------------------------------------------
+
+6.	изменить любой параметр системы только для текущего экземпляра. Доказать выводов V$ и cat файла инициализации
+
+(Когда SCOPE установлена в BOTH, все динамические изменения записываются в SPFILE и немедленно становятся действующими в экземпляре.)
+
+SELECT * FROM v$parameter wHerE name='log_checkpoint_interval';
+alter system set log_checkpoint_interval=20 scope=BOTH;
+select * from v$parameter WHERE name='log_checkpoint_interval';
+
+//обратно восстанавливаем
+alter system set log_checkpoint_interval=0 scope=BOTH;
+
+----------------------------------------------------------------------------------
+7.а READ ONLY (ALTER DATABASE OPEN READ ONLY;)
+shutdown;
+alter database open read only;
+
+create table testik (a varchar(255))
+
+Error report -
+SQL Error: ORA-00604: error occurred at recursive SQL level 1
+ORA-16000: database open for read-only access
+00604. 00000 -  "error occurred at recursive SQL level %s"
+*Cause:    An error occurred while processing a recursive SQL statement
+           (a statement applying to internal dictionary tables).
+*Action:   If the situation described in the next error on the stack
+           can be corrected, do so; otherwise contact Oracle Support.
+----------------------------------------------------------------------------------
+7.b RESTRICT и перевод в открытую (ALTER SYSTEM DISABLE RESTRICTED SESSION;)
+SQL> shutdown abort;
+ORACLE instance shut down.
+SQL> startup restrict;
+ORACLE instance started.
+
+Total System Global Area  722366464 bytes
+Fixed Size		    2216864 bytes
+Variable Size		  452988000 bytes
+Database Buffers	  260046848 bytes
+Redo Buffers		    7114752 bytes
+Database mounted.
+Database opened.
+SQL> conn user1/1
+ERROR:
+ORA-01017: invalid username/password; logon denied
+
+
+Warning: You are no longer connected to ORACLE.
+SQL> connect user_max/1
+ERROR:
+ORA-01035: ORACLE only available to users with RESTRICTED SESSION privilege
+-----------------------------------
+SQL> connect sys/1 as sysdba;
+Connected.
+SQL> alter system disabl restricted session;
+SQL> alter system disable restricted session;
+System altered.
+SQL> connect user_max/1;
+Connected.
+----------------------------------------------------------------------------------
+7.c. SHUTDOWN (NORMAL/TRANSACTIONAL/IMMEDIATE/ABORT)
+create table test_seven_c (a number, b varchar2(100));
+insert into test_seven_c values (356456, 'fghdfhjfghkfg');
+select * from test_seven_c 
+-----
+Table TEST_SEVEN_C created.
+
+
+1 row inserted.
+
+         A 	B                                                                                                  
+    356456 	fghdfhjfghkfg
+-----
+
+shutdown immediate
+startup mount
+alter database open 
+select * from test_seven_c 
+-----
+no rows selected
+
+----------------------------------------------------------------------------------
+8.
+select * from v$instance;
+(DATABASE_STATUS = ACTIVE)
+
+ALTER SYSTEM SUSPEND; 
+select * from v$instance;
+(DATABASE_STATUS = SUSPENDED)
+
+ALTER SYSTEM RESUME
+select * from v$instance;
+(DATABASE_STATUS = ACTIVE)
+----------------------------------------------------------------------------------
+9.
+alter system set optimizer_mode = rule scope=spfile;
+(Когда SCOPE установлена в SPFILE, изменения не применяются немедленно, а только записываются в SPFILE. )
+select value from v$parameter where name='optimizer_mode'
+ union all
+select value from v$spparameter where name='optimizer_mode'
+
+result: ALL_ROWS
+	RULE
+(Динамическое представление V$SPPARAMETER аналогично представлению V$PARAMETER и служит для записи всех имен параметров инициализации и их значений при использовании файла SPFILE вместо init.ora.)
+----------------------------------------------------------------------------------
+10.12.
+CREATE USER user_max IDENTIFIED BY 1;
+( Если требуется, чтобы пользователь имел неограниченные права использования во всех табличных пространствах, ему нужно выдать полномочия UNLIMITED TABLESPACE: )
+GRANT UNLIMITED TABLESPACE TO user_max;
+SQL>  GRANT CREATE SESSION TO user_max;  
+SQL>  GRANT CONNECT to user_max;
+
+CREATE USER user_max2 IDENTIFIED BY 1 
+	GRANT QUOTA 0M ON USERS;    
+  	DEFAULT TABLESPACE USERS; 
+
+
+CREATE PROFILE DUMMYS2_PROFILE LIMIT IDLE_TIME 15 SESSIONS_PER_USER 2;
+
+CREATE USER user_max2 IDENTIFIED BY 1 DEFAULT TABLESPACE users2 TEMPORARY TABLESPACE TEMP QUOTA 50M;
+Чтобы пользователь user_max2 мог подключиться к базе и начать обмен данными с ней, ему нужно предоставить системные полномочия CREATE SESSION, как показано в следующем примере: 
+SQL>  GRANT CREATE SESSION TO user_max2;
+SQL>  GRANT CONNECT to user_max2;
+
+----------------------------------------------------------------------------------
+CREATE PROFILE master   
+  LIMIT   
+  connect_time 60  
+  idle_time 1800   
+  sessions_per_user 2;
+
+CREATE USER max_user1 IDENTIFIED BY 1
+	TEMPORARY TABLESPACE SYSTEM
+	DEFAULT TABLESPACE USERS      
+	GRANT QUOTA 50M ON USERS;      
+PROFILE 'master   '; 
+------------------------------------------------------------------------------------
+11.
+SQL> SELECT username, account_status FROM dba_users;
+
+USERNAME		       ACCOUNT_STATUS
+
+SYS			       OPEN
+SYSTEM			       OPEN
+DBSNMP			       OPEN
+SYSMAN			       OPEN
+USER_MAX2		       OPEN
+USER_MAX		       OPEN
+OUTLN			       EXPIRED & LOCKED
+MGMT_VIEW		       EXPIRED & LOCKED
+FLOWS_FILES		       EXPIRED & LOCKED
+MDSYS			       EXPIRED & LOCKED
+ORDSYS			       EXPIRED & LOCKED
+-------------------------------------------------------------------------------------------
+
+SELECT DISTINCT resource_name, limit   
+	FROM dba_profiles   
+	WHERE profile='DEFAULT';
