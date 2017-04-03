@@ -1,0 +1,9 @@
+shutdown immediate;
+startup restrict;
+shutdown;
+startup mount;
+alter database open read only;
+
+select open_mode from v$database;
+
+ALTER SYSTEM DISABLE RESTRICTED SESSION;
