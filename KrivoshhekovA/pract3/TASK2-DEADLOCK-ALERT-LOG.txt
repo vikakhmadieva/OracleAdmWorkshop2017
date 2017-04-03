@@ -1,0 +1,36 @@
+<msg time='2017-04-03T17:12:25.440+03:00' org_id='oracle' comp_id='rdbms'
+ client_id='' type='UNKNOWN' level='16'
+ host_id='tatuuin' host_addr='127.0.0.1' module='MMON_SLAVE'
+ pid='61149'>
+ <txt>database for recovery-related files, and does not reflect the amount of
+ </txt>
+</msg>
+<msg time='2017-04-03T17:12:25.440+03:00' org_id='oracle' comp_id='rdbms'
+ client_id='' type='UNKNOWN' level='16'
+ host_id='tatuuin' host_addr='127.0.0.1' module='MMON_SLAVE'
+ pid='61149'>
+ <txt>space available in the underlying filesystem or ASM diskgroup.
+ </txt>
+</msg>
+<msg time='2017-04-03T17:19:51.154+03:00' org_id='oracle' comp_id='rdbms'
+ client_id='' type='UNKNOWN' level='16'
+ host_id='tatuuin' host_addr='127.0.0.1' module='sqlplus@tatuuin (TNS V1-V3)'
+ pid='61651'>
+ <txt>ORA-00060: Deadlock detected. More info in file /u01/app/oracle/diag/rdbms/ark/ARK/trace/ARK_ora_61651.trc.
+ </txt>
+</msg>
+<msg time='2017-04-03T17:22:24.668+03:00' org_id='oracle' comp_id='rdbms'
+ msg_id='ksbs1p_real:2253:2371767696' client_id='' type='NOTIFICATION'
+ group='process start' level='16' host_id='tatuuin'
+ host_addr='127.0.0.1' module='' pid='61068'>
+ <txt>Starting background process SMCO
+ </txt>
+</msg>
+<msg time='2017-04-03T17:22:24.681+03:00' org_id='oracle' comp_id='rdbms'
+ msg_id='ksbrdp:3833:3697353022' type='NOTIFICATION' group='process start'
+ level='16' host_id='tatuuin' host_addr='127.0.0.1'
+ pid='61800'>
+ <txt>SMCO started with pid=28, OS id=61800 
+ </txt>
+</msg>
+
