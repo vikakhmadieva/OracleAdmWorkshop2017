@@ -1,0 +1,36 @@
+﻿ test_user_2:
+CREATE TABLE table_1 (c1 NUMBER PRIMARY KEY, c2 VARCHAR2(50));
+GRANT insert ON table_1 TO TestUser1;
+GRANT select ON table_1 TO TestUser1;
+----------------------------------------------------------------------------------
+test_user_1:
+INSERT INTO TestUser2.t1 (c1, c2) VALUES(1, 'Строка1');
+----------------------------------------------------------------------------------
+test_user_2:
+INSERT INTO t1 (c1, c2) VALUES(2, 'Строка2');
+
+INSERT INTO test_user_2.table_1  (c1, c2) VALUES(2, 'Строка2');
+----------------------------------------------------------------------------------
+смотрим sid
+
+select * from v$session order by username;
+SELECT * FROM v$lock WHERE sid IN (145, 20) AND type = 'TX';
+----------------------------------------------------------------------------------
+вторым сеансом пытаемся вставить строку
+
+INSERT INTO t1 (c1, c2) VALUES(1, 'Строка1');
+
+бесконечно ожидаем
+----------------------------------------------------------------------------------
+Error starting at line : 6 in command -
+INSERT INTO test_user_2.table_1 (c1, c2) VALUES(2, 'Строка2')
+Error report -
+SQL Error: ORA-00060: deadlock detected while waiting for resource
+00060. 00000 -  "deadlock detected while waiting for resource"
+*Cause:    Transactions deadlocked one another while waiting for resources.
+*Action:   Look at the trace file to see the transactions and resources
+           involved. Retry if necessary. 
+----------------------------------------------------------------------------------
+ Выдержка из файла /u01/app/oracle/diag/rdbms/max/MAX/trace/alert_MAX.log:
+Sun Apr 09 16:49:15 2017
+ORA-00060: Deadlock detected. More info in file /u01/app/oracle/diag/rdbms/max/MAX/trace/MAX_ora_56473.trc.
