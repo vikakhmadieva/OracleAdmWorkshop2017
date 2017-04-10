@@ -1,0 +1,48 @@
+/* Для создания блокировок нам понадобятся два пользователя с правами на создание сессии, создание и измение таблиц и квотой. Создадим пользователей TestUser1 и TestUser2: */
+CREATE USER TestUser1 IDENTIFIED BY TestPass1 DEFAULT TABLESPACE users2 TEMPORARY TABLESPACE TEMP QUOTA 5M ON users2;
+grant CREATE SESSION to TestUser1;
+grant CONNECT to TestUser1;
+GRANT CREATE TABLE TO TestUser1;
+GRANT ALTER ANY TABLE TO TestUser1;
+
+/*      //////////     */
+
+CREATE USER TestUser2 IDENTIFIED BY TestPass2 DEFAULT TABLESPACE users2 TEMPORARY TABLESPACE TEMP QUOTA 5M ON users2;
+grant CREATE SESSION to TestUser2;
+grant CONNECT to TestUser2;
+GRANT CREATE TABLE TO TestUser2;
+
+/* От пользователя TestUser2 создадим таблицу TestTable01 и выдадим права на неё пользователю TestUser1 */
+create table TestTable01 (a number, b varchar2(10));
+insert into TestTable01 values (14, 'abc');
+select * from TestTable01;
+GRANT SELECT ON TestTable01 TO TestUser1;
+GRANT update ON TestTable01 TO TestUser1;
+
+/* От пользователя TestUser1 убеждаемся, что он может делать SELECT из таблицы TestTable01 */
+select * from TestUser2.TestTable01;
+/* В выводе видим что в таблице TestTable01 содержится всего одна строка: 
+A = 14, B = 'abc' */
+
+/* Делаем update на эту строку, но НЕ коммитим эту транзакцию */
+update TestUser2.TestTable01 set A = 15, B = 'asd';
+
+/* Теперь от пользователя TestUser2 убеждаемся что значения в таблице не изменились */
+select * from TestTable01;
+
+/* И наконец создаём эту самую блокировку, пытаясь изменить строку уже от пользователя TestUser2 */
+update TestUser2.TestTable01 set A = 16, B = 'qwe';
+/* Видим что запрос пытается выполнится, но у него ничего не получается, а дело всё в том что тот update, который мы делали от пользователя TestUser1 стоит в очереди и ждёт либо коммита либо роллбэка. Сделаем коммит этой первой транзакции в результате видим что вторая транзакция (от пользователя TestUser2) наконец-то успешно выполнена. Можно также посмотреть какая сессия блокирует нам второй update таким вот запросом: */
+select blocking_session from v$session;
+
+/* Снова создадим блокировку, но на этот раз попробуем убить сессию которая блокирует строчку. Синтаксис команды для убийства сессии такой: */
+ALTER SYSTEM KILL SESSION 'sid,serial#';
+
+/* sid блокирующей сессии мы смотрим этим запросом */
+select blocking_session from v$session;
+
+/* В данном случае у нас у блокирующей сессии sid = 136. Посмотрим её serial# */
+select serial# from v$session where sid = 136;
+
+/* Ну и наконец убьём блокирующую сессию. Блокировка снята, вторая транзакция выполнилась. */
+ALTER SYSTEM KILL SESSION '136,168';
