@@ -1,0 +1,40 @@
+CREATE USER test_user_1 IDENTIFIED BY 1 DEFAULT TABLESPACE users TEMPORARY TABLESPACE TEMP QUOTA 10M ON users;
+grant CREATE SESSION to test_user_1;
+grant CONNECT to test_user_1;
+GRANT CREATE TABLE TO test_user_1;
+GRANT ALTER ANY TABLE TO test_user_1;
+----------------------------------------------------------------------------------
+CREATE USER test_user_2 IDENTIFIED BY 1 DEFAULT TABLESPACE users TEMPORARY TABLESPACE TEMP QUOTA 10M ON users;
+grant CREATE SESSION to test_user_2;
+grant CONNECT to test_user_2;
+GRANT CREATE TABLE TO test_user_2;
+----------------------------------------------------------------------------------
+от test_user_2 созданим:
+
+create table test_table_1 (a number, b varchar2(10));
+insert into test_table_1 values (150, 'srtwsrte');
+select * from test_table_1;
+GRANT SELECT ON test_table_1 TO test_user_1;
+GRANT update ON test_table_1 TO test_user_1;
+----------------------------------------------------------------------------------
+от test_user_1 проверим:
+
+select * from test_user_2.test_table_1;
+----------------------------------------------------------------------------------
+обновляем строку, но не коммитим:
+
+update test_user_2.test_table_1 set a = 1534, b = 'asd' where a =150;
+----------------------------------------------------------------------------------
+Пытаемся черес developer зайти под пользователем видим сообщение:
+Connection "max" has uncommitted changes
+
+пытаемся через консоль от пользователя:
+update test_user_2.test_table_1 set A = 752385, B = 'qfdgwe';
+----------------------------------------------------------------------------------
+зависаем в ожиданиии, пока не сделаем коммит 
+
+Проделывая те же действия , насильно удиваем сессию которая блокирует
+----------------------------------------------------------------------------------
+ALTER SYSTEM KILL SESSION '152,172';
+
+после чего транзакция выполнена
