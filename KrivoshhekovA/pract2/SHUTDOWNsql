@@ -1,0 +1,7 @@
+select * from MYTABLE;
+
+insert into MYTABLE(text) values ('q');
+
+select * from v$transaction;
+
+shutdown immediate;
