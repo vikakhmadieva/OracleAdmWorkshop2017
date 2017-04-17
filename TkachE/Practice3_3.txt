@@ -1,0 +1,87 @@
+truncate table TestTable01;
+select count(*) from TestTable01;
+/* Длительная транзакция за пользователя TestUser2: */
+declare
+v_loop number := 0;
+
+begin
+	while v_loop <= 1000000 loop
+		insert into TestTable01 values (14, 'abc');
+		v_loop := v_loop + 1;
+	end loop;
+end;
+
+/* Выведем информацию о транзакциях: */
+select * from v$transaction;
+
+/* Количество используемых блоков нашей длительной транзакции(http://my-oracle.it-blogs.com.ua/post-419.aspx): */
+select USED_UBLK from v$transaction;
+
+/* Оптимальное значение UNDO RETENTION при текущей активности(http://team.furia.ru/fast_oracle_37_team.html):  */
+SELECT D.UNDO_SIZE/(1024*1024) "ACTUAL UNDO SIZE [MByte]", SUBSTR(E.VALUE,1,25) "UNDO RETENTION [Sec]", ROUND((D.UNDO_SIZE / (TO_NUMBER(F.VALUE) * G.UNDO_BLOCK_PER_SEC))) "OPTIMAL UNDO RETENTION [Sec]" FROM ( SELECT SUM(A.BYTES) UNDO_SIZE FROM V$DATAFILE A, V$TABLESPACE B, DBA_TABLESPACES C WHERE C.CONTENTS = 'UNDO' AND C.STATUS = 'ONLINE' AND B.NAME = C.TABLESPACE_NAME AND A.TS# = B.TS# ) D, V$PARAMETER E, V$PARAMETER F, ( SELECT MAX(UNDOBLKS/((END_TIME-BEGIN_TIME)*3600*24)) UNDO_BLOCK_PER_SEC FROM V$UNDOSTAT ) G WHERE  E.NAME = 'undo_retention' AND F.NAME = 'db_block_size';
+/* Запрос выдал следующее: 
+ ACTUAL UNDO SIZE [MByte]
+------------------------
+670
+
+UNDO RETENTION [Sec]
+--------------------
+900
+
+OPTIMAL UNDO RETENTION [Sec]
+----------------------------
+5947 
+*/
+
+/* Надо знать значение UNDO _ RETENTION в секундах ( UR ), количество undo блоков данных генерируемых в секунду ( UPS ) и размер блока данных ( DBS ).
+
+Формула для расчета размера undo табличного пространства:
+
+UndoSpace = [ UR * (UPS * DBS)] + (DBS*24). */
+SELECT (UR*(UPS*DBS))+(DBS*24) AS "Bytes"
+FROM (SELECT value AS UR
+FROM v$parameter 
+WHERE name = 'undo_retention'),
+(SELECT (SUM(undoblks)/SUM(((end_time-begin_time)*86400))) AS UPS 
+FROM v$undostat),
+(SELECT value AS DBS FROM v$parameter WHERE name='db_block_size');
+/* Bytes 
+--------------
+617816.8945016176824128812125811375623828 */
+
+/* Распространенной практикой является установка параметра UNDO_RETENTION равным времени выполнения самого длинного запроса, что бы избежать ошибки ORA-01555. Для получения информации о самом длинном запросе, за последние 7 дней, выполните запрос: */
+SELECT MAX(MAXQUERYLEN) FROM V$UNDOSTAT;
+/* MAX(MAXQUERYLEN)
+----------------
+            1257
+1 row selected.
+
+Так же можно попробовать выполнить запросы к представлениям V$SESSION_LONGOPS и V$TRANSACTION. */
+
+/* Выведем текущие UNDO параметры: */
+show parameter undo;
+/* 
+NAME            TYPE    VALUE    
+--------------- ------- -------- 
+undo_management string  AUTO     
+undo_retention  integer 900      
+undo_tablespace string  UNDOTBS1 
+ */
+
+/* Выведем необходимую информацию о табличном пространстве UNDOTBS1: */
+select * from DBA_TABLESPACES where TABLESPACE_NAME = 'UNDOTBS1';
+
+/* Поменяем undo_retention на 3600 (то есть 1 час) */
+alter system set undo_retention = 3600;
+
+/* Далее необходимо "вычислить размер табличного пространства отмены для поддержки 1-часового undo retention interval". Делаем это по уже известной формуле. */
+SELECT (UR*(UPS*DBS))+(DBS*24) AS "Bytes"
+FROM (SELECT value AS UR
+FROM v$parameter 
+WHERE name = 'undo_retention'),
+(SELECT (SUM(undoblks)/SUM(((end_time-begin_time)*86400))) AS UPS 
+FROM v$undostat),
+(SELECT value AS DBS FROM v$parameter WHERE name='db_block_size');
+/* Bytes 
+--------------
+1887104.71017369008126783618953803363706 */
