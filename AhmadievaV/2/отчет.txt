@@ -1,0 +1,150 @@
+1.	создание базы VIVALEN с помощью DBCA
+2.	генерация скрипта создания БД с использованием DBCA. файл VI.HTML
+3.	создание шаблона базы данных на основе созданной и запущенной БД. файл spfileVI.ora
+
+
+4. 
+	export ORACLE_SID="VIVALEN"
+	sqlplus / as sysdba
+	startup
+	select * from V$INSTANCE;
+---------------------------------------------------------------------------------------
+INSTANCE_NUMBER INSTANCE_NAME
+--------------- ----------------
+HOST_NAME
+----------------------------------------------------------------
+VERSION 	  STARTUP_T STATUS	 PAR	THREAD# ARCHIVE LOG_SWITCH_WAIT
+----------------- --------- ------------ --- ---------- ------- ---------------
+LOGINS	   SHU DATABASE_STATUS	 INSTANCE_ROLE	    ACTIVE_ST BLO
+---------- --- ----------------- ------------------ --------- ---
+	      1 VIVALEN
+tatuuin
+11.2.0.1.0	  25-APR-17 OPEN	 NO	      1 STOPPED
+ALLOWED    NO  ACTIVE		 PRIMARY_INSTANCE   NORMAL    NO
+----------------------------------------------------------------------------------------
+5. 	файл spfileVI.ora
+
+6.
+	SELECT * FROM v$parameter wHerE name='log_checkpoint_interval';
+	alter system set log_checkpoint_interval=150 scope=BOTH;
+	6.csv
+7.
+	(в консоли)
+	shutdown immediate
+	startup mount
+a.	ALTER DATABASE OPEN READ ONLY;
+	(sqldeveloper - reconnect)
+	create TABLE test(a number, b number);
+-----------------------------------------------------------------------------------------
+create TABLE t(a number, b number)
+Error report -
+SQL Error: ORA-00604: error occurred at recursive SQL level 1
+ORA-16000: database open for read-only access
+00604. 00000 -  "error occurred at recursive SQL level %s"
+*Cause:    An error occurred while processing a recursive SQL statement
+           (a statement applying to internal dictionary tables).
+*Action:   If the situation described in the next error on the stack
+           can be corrected, do so; otherwise contact Oracle Support.
+-----------------------------------------------------------------------------------------
+
+b.(sqldeveloper)
+	CREATE tablespace users1 daTaFILE '/u01/app/oracle/oradata/VIVALEN/Myusers01.dbf' SIZE 100M;
+	CREATE TEMPORARY tablespace TEMP1 TEMPFILE '/u01/app/oracle/oradata/VIVALEN/Mytemp01.dbf' SIZE 100M;
+	CREATE USER us IDENTIFIED BY 1 DEFAULT TABLESPACE users1 TEMPORARY TABLESPACE TEMP1 QUOTA 0 ON users1;
+	grant CREATE_SESSION to us;
+	grant CONNECT to us;
+	(sql)
+	conn us/1 
+	conn sys/1 as sysdba
+	shutdown immediate
+	startup restrict
+	conn us/1 
+-------------------------------------------------------------------------------------------
+	startup restrict
+	ORACLE instance started.
+
+	Total System Global Area 1135747072 bytes
+	Fixed Size		    2212656 bytes
+	Variable Size		  687869136 bytes
+	Database Buffers	  436207616 bytes
+	Redo Buffers		    9457664 bytes
+	Database mounted.
+	Database opened.
+	SQL> conn us/1 
+	ERROR:
+	ORA-01035: ORACLE only available to users with RESTRICTED SESSION privilege
+--------------------------------------------------------------------------------------------
+	ALTER SYSTEM DISABLE RESTRICTED SESSION;
+	disconnect;
+	conn us/1 
+--------------------------------------------------------------------------------------------
+	ALTER SYSTEM DISABLE RESTRICTED SESSION;
+
+	System altered.
+
+	SQL> disconnect
+	Disconnected from Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - 64bit Production
+	With the Partitioning option
+	SQL> conn us/1
+	Connected.
+---------------------------------------------------------------------------------------------
+
+c.
+	create table Test (a number, b number);
+	insert into Test values (2, 3);
+	select * from Test;
+	7c1.csv
+	
+	shutdown immediate
+	startup mount
+	alter database open; 
+	select * from Test;
+	7c2.csv
+8. 
+	alter system suspend;
+	select Database_Status from V$INSTANCE;
+	alter system resume;
+------------------------------------------------------------------------------------
+	SQL> alter system suspend;
+
+	System altered.
+
+	SQL> select Database_Status from V$INSTANCE;
+
+	DATABASE_STATUS
+	-----------------
+	SUSPENDED
+
+	SQL> alter system resume;
+
+	System altered.
+
+	SQL> select Database_Status from V$INSTANCE;
+
+	DATABASE_STATUS
+	-----------------
+	ACTIVE
+------------------------------------------------------------------------------------
+
+10-13.
+	CREATE tablespace SPACE2 daTaFILE '/u01/app/oracle/oradata/VIVALEN/MySPACE2.dbf' SIZE 100M;
+	CREATE TEMPORARY tablespace TEMPORARY1 TEMPFILE '/u01/app/oracle/oradata/VIVALEN/MyTEMPORARY1.dbf' SIZE 100M;
+	CREATE PROFILE VI_PROFILE1 LIMIT CONNECT_TIME UNLIMITED IDLE_TIME UNLIMITED SESSIONS_PER_USER UNLIMITED;
+	CREATE USER Vi_1 IDENTIFIED BY 123456 DEFAULT TABLESPACE SPACE2 TEMPORARY TABLESPACE TEMPORARY1 QUOTA 0 ON SPACE2;
+	grant CREATE SESSION to Vi_1;
+	grant CONNECT to Vi_1;
+	alter user Vi_1 profile VI_PROFILE1;
+	CREATE PROFILE VI_PROFILE2 LIMIT IDLE_TIME 15 SESSIONS_PER_USER 2;
+	CREATE USER Vi_2 IDENTIFIED BY 654321 DEFAULT TABLESPACE SPACE2 TEMPORARY TABLESPACE TEMPORARY1 QUOTA 50M ON SPACE2;
+	grant CREATE SESSION to Vi_2;
+	grant CONNECT to Vi_2;
+	select * from DBA_USERS;
+	10.csv
+	13.csv
+
+
+
+
+
+
+
