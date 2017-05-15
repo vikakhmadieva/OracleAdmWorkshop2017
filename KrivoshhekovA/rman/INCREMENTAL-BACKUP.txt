@@ -1,0 +1,55 @@
+RMAN> BACKUP INCREMENTAL LEVEL 1 CUMULATIVE DATABASE;
+
+Starting backup at 15-MAY-17
+using channel ORA_DISK_1
+no parent backup or copy of datafile 1 found
+no parent backup or copy of datafile 2 found
+no parent backup or copy of datafile 3 found
+no parent backup or copy of datafile 4 found
+channel ORA_DISK_1: starting incremental level 0 datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00001 name=/u01/app/oracle/oradata/ARK/system01.dbf
+input datafile file number=00002 name=/u01/app/oracle/oradata/ARK/sysaux01.dbf
+input datafile file number=00003 name=/u01/app/oracle/oradata/ARK/undotbs01.dbf
+input datafile file number=00004 name=/u01/app/oracle/oradata/ARK/users01.dbf
+channel ORA_DISK_1: starting piece 1 at 15-MAY-17
+channel ORA_DISK_1: finished piece 1 at 15-MAY-17
+piece handle=/home/oracle/rman/full_0bs4akn6_11_1 tag=TAG20170515T165502 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:16
+Finished backup at 15-MAY-17
+
+Starting Control File Autobackup at 15-MAY-17
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03009: failure of Control File Autobackup command on ORA_DISK_1 channel at 05/15/2017 16:55:19
+ORA-19504: failed to create file "/u01/app/oracle/product/11.2.0/HOGWARTS/dbs/home/oracle/rman/autobackup/cf_c-3936135353-20170515-00"
+ORA-27040: file create error, unable to create file
+Linux-x86_64 Error: 2: No such file or directory
+
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '?/home/oracle/rman/autobackup/cf_%F';
+
+old RMAN configuration parameters:
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO 'home/oracle/rman/autobackup/cf_%F';
+new RMAN configuration parameters:
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '?/home/oracle/rman/autobackup/cf_%F';
+new RMAN configuration parameters are successfully stored
+
+RMAN> BACKUP INCREMENTAL LEVEL 1 CUMULATIVE DATABASE;
+
+Starting backup at 15-MAY-17
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting incremental level 1 datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00001 name=/u01/app/oracle/oradata/ARK/system01.dbf
+skipping datafile 00001 because it has not changed
+input datafile file number=00002 name=/u01/app/oracle/oradata/ARK/sysaux01.dbf
+skipping datafile 00002 because it has not changed
+input datafile file number=00003 name=/u01/app/oracle/oradata/ARK/undotbs01.dbf
+skipping datafile 00003 because it has not changed
+input datafile file number=00004 name=/u01/app/oracle/oradata/ARK/users01.dbf
+skipping datafile 00004 because it has not changed
+channel ORA_DISK_1: backup cancelled because all files were skipped
+Finished backup at 15-MAY-17
+
+RMAN> 

@@ -1,0 +1,32 @@
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP ON;
+
+new RMAN configuration parameters:
+CONFIGURE CONTROLFILE AUTOBACKUP ON;
+new RMAN configuration parameters are successfully stored
+
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP FORMAT 
+  FOR DEVICE TYPE DISK TO 'home/oracle/rman/autobackup';
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-00558: error encountered while parsing input commands
+RMAN-01009: syntax error: found "identifier": expecting one of: "clear, to"
+RMAN-01008: the bad identifier was: Thome
+RMAN-01007: at line 2 column 24 file: standard input
+
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO 'home/oracle/rman/autobackup';
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of configure command at 05/15/2017 16:52:15
+RMAN-06492: control file AUTOBACKUP format "home/oracle/rman/autobackup" must specify a "%F" format specifier
+
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO 'home/oracle/rman/autobackup/cf_%F';
+
+new RMAN configuration parameters:
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO 'home/oracle/rman/autobackup/cf_%F';
+new RMAN configuration parameters are successfully stored
+
+RMAN> 
