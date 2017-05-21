@@ -1,0 +1,25 @@
+1 row updated.
+
+1 row updated.
+
+Table TEST1 created.
+
+Error starting at line : 5 in command -
+GRANT insert ON test1 TO TestUser1
+Error report -
+SQL Error: ORA-01749: you may not GRANT/REVOKE privileges to/from yourself
+01749. 00000 -  "you may not GRANT/REVOKE privileges to/from yourself"
+*Cause:    
+*Action:
+Table TEST1 dropped.
+
+1 row inserted.
+
+Error starting at line : 5 in command -
+INSERT INTO TestUser2.test1 (c1, c2) VALUES(2, 2)
+Error report -
+SQL Error: ORA-00060: deadlock detected while waiting for resource
+00060. 00000 -  "deadlock detected while waiting for resource"
+*Cause:    Transactions deadlocked one another while waiting for resources.
+*Action:   Look at the trace file to see the transactions and resources
+           involved. Retry if necessary.

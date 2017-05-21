@@ -1,0 +1,37 @@
+User TESTUSER1 created.
+
+Grant succeeded.
+
+Grant succeeded.
+
+Grant succeeded.
+
+User TESTUSER2 created.
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+Table TESTTABLE01 created.
+
+1 row inserted.
+
+Grant succeeded.
+
+Grant succeeded.
+
+Grant succeeded.
+
+Error starting at line : 1 in command -
+CREATE tablespace SPACE2 daTaFILE '/u01/app/oracle/oradata/VIVALEN/MySPACE2.dbf' SIZE 100M
+Error report -
+SQL Error: ORA-01543: tablespace 'SPACE2' already exists
+01543. 00000 -  "tablespace '%s' already exists"
+*Cause:    Tried to create a tablespace which already exists
+*Action:   Use a different name for the new tablespace
+Table TESTTABLE01 dropped.
+

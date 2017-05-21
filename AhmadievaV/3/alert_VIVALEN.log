@@ -1,0 +1,14 @@
+Sun May 21 15:00:20 2017
+Starting background process VKRM
+Sun May 21 15:00:20 2017
+VKRM started with pid=25, OS id=8868 
+Sun May 21 15:00:26 2017
+Begin automatic SQL Tuning Advisor run for special tuning task  "SYS_AUTO_SQL_TUNING_TASK"
+End automatic SQL Tuning Advisor run for special tuning task  "SYS_AUTO_SQL_TUNING_TASK"
+Sun May 21 15:21:23 2017
+CREATE tablespace SPACE2 daTaFILE '/u01/app/oracle/oradata/VIVALEN/MySPACE2.dbf' SIZE 100M
+ORA-1543 signalled during: CREATE tablespace SPACE2 daTaFILE '/u01/app/oracle/oradata/VIVALEN/MySPACE2.dbf' SIZE 100M...
+Sun May 21 15:41:22 2017
+Starting ORACLE instance (normal)
+Sun May 21 17:33:00 2017
+ORA-00060: Deadlock detected. More info in file /u01/app/oracle/diag/rdbms/vivalen/VIVALEN/trace/VIVALEN_ora_10071.trc.

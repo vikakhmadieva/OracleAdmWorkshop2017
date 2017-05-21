@@ -1,0 +1,95 @@
+3.
+admin:
+//два пользователя с правами на создание сессии, создание и измение таблиц и квотой
+CREATE USER TestUser1 IDENTIFIED BY 123456 DEFAULT TABLESPACE SPACE2 TEMPORARY TABLESPACE TEMP QUOTA 5M ON SPACE2;
+grant CREATE SESSION to TestUser1;
+GRANT CREATE TABLE TO TestUser1;
+GRANT ALTER ANY TABLE TO TestUser1;
+CREATE USER TestUser2 IDENTIFIED BY 654321 DEFAULT TABLESPACE SPACE2 TEMPORARY TABLESPACE TEMP QUOTA 5M ON SPACE2;
+grant CREATE SESSION to TestUser2;
+grant CONNECT to TestUser2;
+GRANT CREATE TABLE TO TestUser2;
+
+//сменим пользователя на TestUser2 и добавим таблицу TestTable01:
+TestUser2:
+create table TestTable01 (a number, b number);
+insert into TestTable01 values (1, 1);
+select * from TestTable01;
+
+//права на эту таблицу TestUser1
+GRANT SELECT ON TestTable01 TO TestUser1;
+GRANT update ON TestTable01 TO TestUser1;
+
+//сменим пользователя на TestUser1 и проверим SELECT из таблицы TestTable01 
+TestUser1:
+select * from TestUser2.TestTable01;
+
+//если все корректно выполнилось, то апдейтим, но не коммитим:
+update TestUser2.TestTable01 set A = 2, B = 2;
+
+//сменим пользователя на TestUser2 и проверим, что не изменились значения */
+select * from TestTable01;
+ 
+//сделаем апдейт и тем самым, создадим блокировку 
+update TestUser2.TestTable01 set A = 4, B = 4;
+
+
+//запрос пытается выполнится, так как update от пользователя TestUser1 стоит в очереди и ждёт коммита либо роллбэка. Если сделаем коммит от TestUser1, то увидим, что транзакция TestUser2 выполнилась.
+
+//Попытаемся убить сессию:
+---------------------------------------------------------
+
+SQL:
+SQL> select blocking_session from v$session;
+BLOCKING_SESSION
+----------------
+	      15
+BLOCKING_SESSION
+----------------
+BLOCKING_SESSION
+----------------
+26 rows selected.
+
+//нашли сид блокирующей сессии, смотрим сериал
+SQL> select serial# from v$session where sid = 15;     
+   SERIAL#
+----------
+	35
+	
+//килл блокировку, после этого транзакция выполнилась.
+SQL> ALTER SYSTEM KILL SESSION '15,35';          
+System altered.
+---------------------------------------------------------
+DEADLOCK
+
+TestUser2:
+CREATE TABLE test1 (c1 NUMBER PRIMARY KEY, c2 number);
+GRANT insert ON test1 TO TestUser1;
+GRANT select ON test1 TO TestUser1;
+
+//сменили пользователя на TestUser1, запишем в таблицу:
+INSERT INTO TestUser2.test1 (c1, c2) VALUES(1, 1);
+
+//от TestUser2 запишем следующее:
+INSERT INTO test1 (c1, c2) VALUES(2, 2);
+
+//в каждом из сеансов установились блокировки транзакций.  
+
+//найдем СИД блокирующих сессий:
+admin:
+select * from v$session order by username;
+SELECT * FROM v$lock;
+SELECT * FROM v$lock WHERE sid IN (14, 15) AND type = 'TX';
+
+//попытались от TestUser1 вставить строку с ключом 2, но строка с таким ключом уже вставлена в транзакции TestUser2 и не завершена
+INSERT INTO TestUser2.test1 (c1, c2) VALUES(2, 2);
+//ожидаем завершения транзакции пользователя TestUser2
+
+//вставим от TestUser2 строку с ключом 1, но эта строка с таким ключом не завершена в транзакции TestUser1 
+INSERT INTO test1 (c1, c2) VALUES(1, 1);
+
+//сеанс уже ранее вставил в таблицу строку с данным значением  ключа и выставил на строку индекса TX-блокировку в исключительном режиме, второй сеанс должен ждать освобождения этой блокировки. В тоже время первый сеанс уже ожидает окончания транзакции во втором сеансе и, следовательно, не может освободить эту блокировку. В результате у нас снова образуется бесконечное ожидание, которое приводит в первом сеансе к исключению:
+
+//Во время транзакции TestUser1 была вставлена строка с ключом 1 и выставлена TX-блокировка в исключительном режиме на строку. Транзакция TestUser2 ждет освобождения блокировки. 
+//Сеанс TestUser1 ждет окончания транзакции TestUser2, и не может освободить свою блокировку. Имеем бесконечное ожидание, которое привело к исключению в TestUser1(смотреть 3-2deadlockTestUser1.xml)
+

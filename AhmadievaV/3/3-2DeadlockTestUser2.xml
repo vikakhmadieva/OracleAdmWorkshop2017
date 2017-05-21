@@ -1,0 +1,25 @@
+Table TEST1 created.
+
+Grant succeeded.
+
+Grant succeeded.
+
+1 row inserted.
+
+Error starting at line : 6 in command -
+INSERT INTO t1 (c1, c2) VALUES(1, 1)
+Error at Command Line : 6 Column : 13
+Error report -
+SQL Error: ORA-00942: table or view does not exist
+00942. 00000 -  "table or view does not exist"
+*Cause:    
+*Action:
+Error starting at line : 6 in command -
+INSERT INTO test1 (c1, c2) VALUES(1, 1)
+Error report -
+SQL Error: ORA-00001: unique constraint (TESTUSER2.SYS_C0010306) violated
+00001. 00000 -  "unique constraint (%s.%s) violated"
+*Cause:    An UPDATE or INSERT statement attempted to insert a duplicate key.
+           For Trusted Oracle configured in DBMS MAC mode, you may see
+           this message if a duplicate entry exists at a different level.
+*Action:   Either remove the unique restriction or do not insert the key.
