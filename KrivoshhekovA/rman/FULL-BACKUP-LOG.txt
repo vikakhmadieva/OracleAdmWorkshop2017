@@ -1,0 +1,290 @@
+[oracle@tatuuin dbs]$ rman
+
+Recovery Manager: Release 11.2.0.1.0 - Production on Mon May 15 16:31:03 2017
+
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
+
+RMAN> backup database tag "every_time_evening";
+
+Starting backup at 15-MAY-17
+using target database control file instead of recovery catalog
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of backup command at 05/15/2017 16:32:31
+RMAN-06171: not connected to target database
+
+RMAN> help;
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-00558: error encountered while parsing input commands
+RMAN-01009: syntax error: found "identifier": expecting one of: "advise, allocate, alter, backup, @, catalog, change, configure, connect, convert, copy, create, crosscheck, delete, drop, duplicate, exit, flashback, grant, host, import, list, mount, open, print, quit, recover, register, release, repair, replace, report, reset, restore, resync, revoke, run, send, set, show, shutdown, spool, sql, startup, switch, transport, unregister, upgrade, validate, {, "
+RMAN-01008: the bad identifier was: help
+RMAN-01007: at line 1 column 1 file: standard input
+
+RMAN> help
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-00558: error encountered while parsing input commands
+RMAN-01009: syntax error: found "identifier": expecting one of: "advise, allocate, alter, backup, @, catalog, change, configure, connect, convert, copy, create, crosscheck, delete, drop, duplicate, exit, flashback, grant, host, import, list, mount, open, print, quit, recover, register, release, repair, replace, report, reset, restore, resync, revoke, run, send, set, show, shutdown, spool, sql, startup, switch, transport, unregister, upgrade, validate, {, "
+RMAN-01008: the bad identifier was: help
+RMAN-01007: at line 1 column 1 file: standard input
+
+RMAN> rman target / 
+2> ;
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of argument list command at 05/15/2017 16:35:26
+RMAN-06171: not connected to target database
+
+RMAN> exi
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-00558: error encountered while parsing input commands
+RMAN-01009: syntax error: found "identifier": expecting one of: "advise, allocate, alter, backup, @, catalog, change, configure, connect, convert, copy, create, crosscheck, delete, drop, duplicate, exit, flashback, grant, host, import, list, mount, open, print, quit, recover, register, release, repair, replace, report, reset, restore, resync, revoke, run, send, set, show, shutdown, spool, sql, startup, switch, transport, unregister, upgrade, validate, {, "
+RMAN-01008: the bad identifier was: exi
+RMAN-01007: at line 1 column 1 file: standard input
+
+RMAN> exit
+
+
+Recovery Manager complete.
+[oracle@tatuuin dbs]$ rman target /
+
+Recovery Manager: Release 11.2.0.1.0 - Production on Mon May 15 16:35:44 2017
+
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: ARK (DBID=3936135353)
+
+RMAN> show all;
+
+using target database control file instead of recovery catalog
+RMAN configuration parameters for database with db_unique_name ARK are:
+CONFIGURE RETENTION POLICY TO REDUNDANCY 1; # default
+CONFIGURE BACKUP OPTIMIZATION OFF; # default
+CONFIGURE DEFAULT DEVICE TYPE TO DISK; # default
+CONFIGURE CONTROLFILE AUTOBACKUP OFF; # default
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '%F'; # default
+CONFIGURE DEVICE TYPE DISK PARALLELISM 1 BACKUP TYPE TO BACKUPSET; # default
+CONFIGURE DATAFILE BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE ARCHIVELOG BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE MAXSETSIZE TO UNLIMITED; # default
+CONFIGURE ENCRYPTION FOR DATABASE OFF; # default
+CONFIGURE ENCRYPTION ALGORITHM 'AES128'; # default
+CONFIGURE COMPRESSION ALGORITHM 'BASIC' AS OF RELEASE 'DEFAULT' OPTIMIZE FOR LOAD TRUE ; # default
+CONFIGURE ARCHIVELOG DELETION POLICY TO NONE; # default
+CONFIGURE SNAPSHOT CONTROLFILE NAME TO '/u01/app/oracle/product/11.2.0/HOGWARTS/dbs/snapcf_ARK.f'; # default
+
+RMAN> CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT '/backup/rman/full_%u_%s_%p';
+
+new RMAN configuration parameters:
+CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT   '/backup/rman/full_%u_%s_%p';
+new RMAN configuration parameters are successfully stored
+
+RMAN> CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF 1 DAYS;    
+
+new RMAN configuration parameters:
+CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF 1 DAYS;
+new RMAN configuration parameters are successfully stored
+
+RMAN> show all;
+
+RMAN configuration parameters for database with db_unique_name ARK are:
+CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF 1 DAYS;
+CONFIGURE BACKUP OPTIMIZATION OFF; # default
+CONFIGURE DEFAULT DEVICE TYPE TO DISK; # default
+CONFIGURE CONTROLFILE AUTOBACKUP OFF; # default
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '%F'; # default
+CONFIGURE DEVICE TYPE DISK PARALLELISM 1 BACKUP TYPE TO BACKUPSET; # default
+CONFIGURE DATAFILE BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE ARCHIVELOG BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT   '/backup/rman/full_%u_%s_%p';
+CONFIGURE MAXSETSIZE TO UNLIMITED; # default
+CONFIGURE ENCRYPTION FOR DATABASE OFF; # default
+CONFIGURE ENCRYPTION ALGORITHM 'AES128'; # default
+CONFIGURE COMPRESSION ALGORITHM 'BASIC' AS OF RELEASE 'DEFAULT' OPTIMIZE FOR LOAD TRUE ; # default
+CONFIGURE ARCHIVELOG DELETION POLICY TO NONE; # default
+CONFIGURE SNAPSHOT CONTROLFILE NAME TO '/u01/app/oracle/product/11.2.0/HOGWARTS/dbs/snapcf_ARK.f'; # default
+
+RMAN> BACKUP AS BACKUPSET DATABASE;
+
+Starting backup at 15-MAY-17
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=24 device type=DISK
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+RMAN-03009: failure of backup command on ORA_DISK_1 channel at 05/15/2017 16:38:24
+ORA-19602: cannot backup or copy active file in NOARCHIVELOG mode
+continuing other job steps, job failed will not be re-run
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+including current control file in backup set
+channel ORA_DISK_1: starting piece 1 at 15-MAY-17
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03009: failure of backup command on ORA_DISK_1 channel at 05/15/2017 16:38:26
+ORA-19504: failed to create file "/backup/rman/full_02s4ajo0_2_1"
+ORA-27040: file create error, unable to create file
+Linux-x86_64 Error: 13: Permission denied
+
+RMAN> CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT '/home/oracle/rman/full_%u_%s_%p';
+
+old RMAN configuration parameters:
+CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT   '/backup/rman/full_%u_%s_%p';
+new RMAN configuration parameters:
+CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT   '/home/oracle/rman/full_%u_%s_%p';
+new RMAN configuration parameters are successfully stored
+released channel: ORA_DISK_1
+
+RMAN> show all;
+
+RMAN configuration parameters for database with db_unique_name ARK are:
+CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF 1 DAYS;
+CONFIGURE BACKUP OPTIMIZATION OFF; # default
+CONFIGURE DEFAULT DEVICE TYPE TO DISK; # default
+CONFIGURE CONTROLFILE AUTOBACKUP OFF; # default
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '%F'; # default
+CONFIGURE DEVICE TYPE DISK PARALLELISM 1 BACKUP TYPE TO BACKUPSET; # default
+CONFIGURE DATAFILE BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE ARCHIVELOG BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT   '/home/oracle/rman/full_%u_%s_%p';
+CONFIGURE MAXSETSIZE TO UNLIMITED; # default
+CONFIGURE ENCRYPTION FOR DATABASE OFF; # default
+CONFIGURE ENCRYPTION ALGORITHM 'AES128'; # default
+CONFIGURE COMPRESSION ALGORITHM 'BASIC' AS OF RELEASE 'DEFAULT' OPTIMIZE FOR LOAD TRUE ; # default
+CONFIGURE ARCHIVELOG DELETION POLICY TO NONE; # default
+CONFIGURE SNAPSHOT CONTROLFILE NAME TO '/u01/app/oracle/product/11.2.0/HOGWARTS/dbs/snapcf_ARK.f'; # default
+
+RMAN> BACKUP AS BACKUPSET DATABASE;
+
+Starting backup at 15-MAY-17
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=24 device type=DISK
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+RMAN-03009: failure of backup command on ORA_DISK_1 channel at 05/15/2017 16:39:42
+ORA-19602: cannot backup or copy active file in NOARCHIVELOG mode
+continuing other job steps, job failed will not be re-run
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+including current control file in backup set
+channel ORA_DISK_1: starting piece 1 at 15-MAY-17
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03009: failure of backup command on ORA_DISK_1 channel at 05/15/2017 16:39:44
+ORA-19504: failed to create file "/home/oracle/rman/full_04s4ajqe_4_1"
+ORA-27040: file create error, unable to create file
+Linux-x86_64 Error: 13: Permission denied
+
+RMAN> BACKUP AS BACKUPSET DATABASE;
+
+Starting backup at 15-MAY-17
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+RMAN-03009: failure of backup command on ORA_DISK_1 channel at 05/15/2017 16:40:51
+ORA-19602: cannot backup or copy active file in NOARCHIVELOG mode
+continuing other job steps, job failed will not be re-run
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+including current control file in backup set
+channel ORA_DISK_1: starting piece 1 at 15-MAY-17
+channel ORA_DISK_1: finished piece 1 at 15-MAY-17
+piece handle=/home/oracle/rman/full_06s4ajsk_6_1 tag=TAG20170515T164051 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+
+RMAN-03009: failure of backup command on ORA_DISK_1 channel at 05/15/2017 16:40:51
+ORA-19602: cannot backup or copy active file in NOARCHIVELOG mode
+
+RMAN> BACKUP AS BACKUPSET DATABASE PLUS ARCHIVELOG;
+
+
+Starting backup at 15-MAY-17
+ORACLE error from target database: 
+ORA-00258: manual archiving in NOARCHIVELOG mode must identify log
+
+using channel ORA_DISK_1
+specification does not match any archived log in the repository
+backup cancelled because there are no files to backup
+Finished backup at 15-MAY-17
+
+Starting backup at 15-MAY-17
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+RMAN-03009: failure of backup command on ORA_DISK_1 channel at 05/15/2017 16:41:20
+ORA-19602: cannot backup or copy active file in NOARCHIVELOG mode
+continuing other job steps, job failed will not be re-run
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+including current control file in backup set
+channel ORA_DISK_1: starting piece 1 at 15-MAY-17
+channel ORA_DISK_1: finished piece 1 at 15-MAY-17
+piece handle=/home/oracle/rman/full_08s4ajtg_8_1 tag=TAG20170515T164120 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of backup plus archivelog command at 05/15/2017 16:41:22
+
+RMAN-03009: failure of backup command on ORA_DISK_1 channel at 05/15/2017 16:41:20
+ORA-19602: cannot backup or copy active file in NOARCHIVELOG mode
+
+RMAN> shutdown immediate;
+
+database closed
+database dismounted
+Oracle instance shut down
+
+RMAN> startup mount;
+
+connected to target database (not started)
+Oracle instance started
+database mounted
+
+Total System Global Area     722366464 bytes
+
+Fixed Size                     2216864 bytes
+Variable Size                440405088 bytes
+Database Buffers             272629760 bytes
+Redo Buffers                   7114752 bytes
+
+RMAN> backup database;
+
+Starting backup at 15-MAY-17
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=133 device type=DISK
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00001 name=/u01/app/oracle/oradata/ARK/system01.dbf
+input datafile file number=00002 name=/u01/app/oracle/oradata/ARK/sysaux01.dbf
+input datafile file number=00003 name=/u01/app/oracle/oradata/ARK/undotbs01.dbf
+input datafile file number=00004 name=/u01/app/oracle/oradata/ARK/users01.dbf
+channel ORA_DISK_1: starting piece 1 at 15-MAY-17
+channel ORA_DISK_1: finished piece 1 at 15-MAY-17
+piece handle=/home/oracle/rman/full_09s4ak1b_9_1 tag=TAG20170515T164323 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:07
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+including current control file in backup set
+channel ORA_DISK_1: starting piece 1 at 15-MAY-17
+channel ORA_DISK_1: finished piece 1 at 15-MAY-17
+piece handle=/home/oracle/rman/full_0as4ak1j_10_1 tag=TAG20170515T164323 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+Finished backup at 15-MAY-17
+
+RMAN>   
