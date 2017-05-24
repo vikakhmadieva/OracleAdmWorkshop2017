@@ -1,0 +1,199 @@
+//проверим аудит
+select name,value from v$parameter where name like 'audit%';
+--------------------------------------------------------------------------------
+NAME
+--------------------------------------------------------------------------------
+VALUE
+--------------------------------------------------------------------------------
+audit_sys_operations
+FALSE
+audit_file_dest
+/u01/app/oracle/admin/VIVALEN/adump
+audit_syslog_level
+NAME
+--------------------------------------------------------------------------------
+VALUE
+--------------------------------------------------------------------------------
+audit_trail
+DB
+---------------------------------------------------------------------------------
+
+
+ select * from dba_stmt_audit_opts union select * from dba_priv_audit_opts;
+
+USER_NAME		       PROXY_NAME
+------------------------------ ------------------------------
+AUDIT_OPTION				 SUCCESS    FAILURE
+---------------------------------------- ---------- ----------
+ALTER ANY PROCEDURE			 BY ACCESS  BY ACCESS
+ALTER ANY TABLE 			 BY ACCESS  BY ACCESS
+ALTER DATABASE				 BY ACCESS  BY ACCESS
+USER_NAME		       PROXY_NAME
+ALTER PROFILE				 BY ACCESS  BY ACCESS
+ALTER SYSTEM				 BY ACCESS  BY ACCESS
+ALTER USER				 	 BY ACCESS  BY ACCESS
+USER_NAME		       PROXY_NAME
+AUDIT SYSTEM				 BY ACCESS  BY ACCESS
+CREATE ANY JOB				 BY ACCESS  BY ACCESS
+CREATE ANY LIBRARY			 BY ACCESS  BY ACCESS
+USER_NAME		       PROXY_NAME
+CREATE ANY PROCEDURE		 BY ACCESS  BY ACCESS
+CREATE ANY TABLE			 BY ACCESS  BY ACCESS
+CREATE EXTERNAL JOB			 BY ACCESS  BY ACCESS
+USER_NAME		       PROXY_NAME
+CREATE PUBLIC DATABASE LINK	 BY ACCESS  BY ACCESS
+CREATE SESSION				 BY ACCESS  BY ACCESS
+CREATE USER				 	 BY ACCESS  BY ACCESS
+USER_NAME		       PROXY_NAME
+DATABASE LINK				 BY ACCESS  BY ACCESS
+DROP ANY PROCEDURE			 BY ACCESS  BY ACCESS
+DROP ANY TABLE				 BY ACCESS  BY ACCESS
+USER_NAME		       PROXY_NAME
+DROP PROFILE				 BY ACCESS  BY ACCESS
+DROP USER					 BY ACCESS  BY ACCESS
+EXEMPT ACCESS POLICY		 BY ACCESS  BY ACCESS
+USER_NAME		       PROXY_NAME
+GRANT ANY OBJECT PRIVILEGE	 BY ACCESS  BY ACCESS
+GRANT ANY PRIVILEGE			 BY ACCESS  BY ACCESS
+GRANT ANY ROLE				 BY ACCESS  BY ACCESS
+USER_NAME		       PROXY_NAME
+PROFILE 				 	 BY ACCESS  BY ACCESS
+PUBLIC SYNONYM				 BY ACCESS  BY ACCESS
+ROLE						 BY ACCESS  BY ACCESS
+USER_NAME		       PROXY_NAME
+SYSTEM AUDIT				 BY ACCESS  BY ACCESS
+SYSTEM GRANT				 BY ACCESS  BY ACCESS
+29 rows selected.
+-----------------------------------------------------------
+
+//Настроим аудит для всех действий по созданию/изменению (create/alter) объектов БД для пользователя TestUser2
+audit create any table by TestUser2;
+Audit succeeded.
+
+audit alter DATABASE by TestUser2; 
+Audit succeeded.
+
+audit alter any table by TestUser2;
+Audit succeeded.
+audit drop any table by TestUser2;
+Audit succeeded.
+
+audit create user by TestUser2;
+Audit succeeded.
+audit drop user by TestUser2;
+Audit succeeded.
+
+audit create role by TestUser2;    
+Audit succeeded.
+audit alter any role by TestUser2;
+Audit succeeded.
+
+audit create procedure by TestUser2;
+Audit succeeded.
+audit alter any procedure by TestUser2;
+Audit succeeded.
+
+
+audit create view by TestUser2;
+Audit succeeded.
+audit CREATE LIBRARY by TestUser2;
+Audit succeeded.
+------------------------------------------------------------------
+// создадим 1000 таблиц от пользователя TestUser2
+begin
+for i in 0..1000 loop
+execute IMMEDIATE 'CREATE TABLE t_'||i||' (k1 NUMBER PRIMARY KEY, k2 number)';
+end loop;
+end;
+
+PL/SQL procedure successfully completed.
+
+//в журнал sys_dba$ не записалось, рестарт базы и выставление в db_extented, truncate sys_dba$ не помогли
+-------------------------------------------------------------------------------
+show parameter audit;
+NAME				     TYPE	 VALUE
+------------------------------------ ----------- ------------------------------
+audit_file_dest 		     string	 /u01/app/oracle/admin/VIVALEN/
+						 adump
+audit_sys_operations		     boolean	 FALSE
+audit_syslog_level		     string
+audit_trail			     string	 DB_EXTENDED
+-------------------------------------------------------------------------------
+
+select * from dba_stmt_audit_opts union select * from dba_priv_audit_opts;
+
+TESTUSER2 	ALTER ANY PROCEDURE			 BY ACCESS  BY ACCESS
+TESTUSER2	ALTER ANY ROLE				 BY ACCESS  BY ACCESS
+TESTUSER2	ALTER ANY TABLE 			 BY ACCESS  BY ACCESS
+TESTUSER2	ALTER DATABASE				 BY ACCESS  BY ACCESS
+TESTUSER2	CREATE ANY LIBRARY			 BY ACCESS  BY ACCESS
+TESTUSER2	CREATE ANY PROCEDURE		 BY ACCESS  BY ACCESS
+TESTUSER2	CREATE ANY TABLE			 BY ACCESS  BY ACCESS
+TESTUSER2	CREATE ANY VIEW 			 BY ACCESS  BY ACCESS
+TESTUSER2	CREATE LIBRARY				 BY ACCESS  BY ACCESS
+TESTUSER2	CREATE PROCEDURE			 BY ACCESS  BY ACCESS
+TESTUSER2	CREATE ROLE				 	 BY ACCESS  BY ACCESS
+TESTUSER2	CREATE USER				 	 BY ACCESS  BY ACCESS
+TESTUSER2	CREATE VIEW				 	 BY ACCESS  BY ACCESS
+TESTUSER2	DROP ANY TABLE				 BY ACCESS  BY ACCESS
+TESTUSER2	DROP USER				 	 BY ACCESS  BY ACCESS
+---------------------------------------------------------------------------------
+
+
+//настроим FGA
+begin
+DBMS_FGA.ADD_POLICY(object_schema => 'TESTUSER2',
+object_name => 't_1',
+policy_name => 'chk_hr_emp1',
+audit_condition => '',
+audit_column => '',
+statement_types => 'insert,update,delete,select',
+enable => TRUE)
+;
+end;
+/
+
+begin
+DBMS_FGA.DROP_POLICY(object_schema => 'TESTUSER2',
+object_name => 't_1',
+policy_name => 'chk_hr_emp')
+;
+end;
+/
+
+select timestamp, 
+   db_user,
+   os_user,
+   object_schema,
+   object_name,
+   sql_text
+from dba_fga_audit_trail;
+
+
+
+
+-------------------------------------------------------------
+REM INSERTING into EXPORT_TABLE
+SET DEFINE OFF;
+Insert into EXPORT_TABLE (TIMESTAMP,DB_USER,OS_USER,OBJECT_SCHEMA,OBJECT_NAME,SQL_TEXT) values (to_date('24-MAY-17','DD-MON-RR'),'TESTUSER2','oracle','TESTUSER2','T_1','select * from T_1');
+Insert into EXPORT_TABLE (TIMESTAMP,DB_USER,OS_USER,OBJECT_SCHEMA,OBJECT_NAME,SQL_TEXT) values (to_date('24-MAY-17','DD-MON-RR'),'TESTUSER2','oracle','TESTUSER2','T_1','select * from T_1');
+Insert into EXPORT_TABLE (TIMESTAMP,DB_USER,OS_USER,OBJECT_SCHEMA,OBJECT_NAME,SQL_TEXT) values (to_date('24-MAY-17','DD-MON-RR'),'TESTUSER2','oracle','TESTUSER2','T_1','select * from T_1');
+Insert into EXPORT_TABLE (TIMESTAMP,DB_USER,OS_USER,OBJECT_SCHEMA,OBJECT_NAME,SQL_TEXT) values (to_date('24-MAY-17','DD-MON-RR'),'TESTUSER2','oracle','TESTUSER2','T_1','select * from T_1');
+------------------------------------------------------------
+
+//удаляем политику аудита
+begin
+DBMS_FGA.DROP_POLICY(object_schema => 'TESTUSER2',
+object_name => 't_1',
+policy_name => 'chk_hr_emp1')
+;
+end;
+/
+
+audit delete any table by TestUser2 WHENEVER NOT SUCCESSFUL;
+Audit succeeded.
+
+------------------------------------------------------------
+
+
+
