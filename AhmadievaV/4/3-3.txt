@@ -1,0 +1,136 @@
+//очистим таблицу
+truncate table TestTable01;
+//проверим
+select count(*) from TestTable01;
+//увеличим квоту для пользователя TestUser2
+
+//создадим длительную транзакцию, проделав insert в цикле 1000000 
+declare
+v_loop number := 0;
+
+begin
+	while v_loop <= 1000000 loop
+		insert into TestTable01 values (14, 'abc');
+		v_loop := v_loop + 1;
+	end loop;
+end;
+
+//посмотрим информацию о транзакциях
+select * from v$transaction;
+--------------------------------------------------------------------------------------------------------------------------------
+ADDR		     XIDUSN    XIDSLOT	   XIDSQN     UBAFIL	 UBABLK		UBASQN     UBAREC STATUS	       START_TIME
+---------------- ---------- ---------- ---------- ---------- --------- ---------- ---------- ---------------- --------------------
+00000000A0C676F8	4	    15	        588	   		3	  		11039	157	   		67 		ACTIVE	       05/22/17 16:31:29
+----------------------------------------------------------------------------------------------------------------------------------
+
+
+//посмотрим количество используемых блоков нашей длительной транзакции
+select USED_UBLK from v$transaction;
+
+--------------------------------------
+ USED_UBLK
+----------
+      8622
+--------------------------------------
+
+
+SELECT MAX(UNDOBLKS/((END_TIME-BEGIN_TIME)*3600*24)) "UNDO_BLOCK_PER_SEC" FROM V$UNDOSTAT;
+UNDO_BLOCK_PER_SEC
+------------------
+	14.3733333
+--------------------------------------
+
+оптимальное Undo Retention вычисляется по формуле 
+Optimal Undo Retention = Actual Undo Size / (DB_BLOCK_SIZE × UNDO_BLOCK_REP_ESC) 
+
+Чтобы получить это значение, выполним запрос:
+SELECT d.undo_size/(1024*1024) "ACTUAL UNDO SIZE [MByte]"
+     , SUBSTR(e.value,1,25) "UNDO RETENTION [Sec]"
+         , ROUND((d.undo_size / (to_number(f.value) * g.undo_block_per_sec))) "OPTIMAL UNDO RETENTION [Sec]"
+FROM (SELECT SUM(a.bytes) undo_size
+      FROM v$datafile a
+             , v$tablespace b
+         , dba_tablespaces c
+          WHERE c.contents = 'UNDO'
+        AND c.status = 'ONLINE'
+        AND b.name = c.tablespace_name
+        AND a.ts# = b.ts#
+     ) d
+   , v$parameter e
+   , v$parameter f
+   , (SELECT MAX(undoblks/((end_time-begin_time)*3600*24)) undo_block_per_sec
+      FROM v$undostat
+     ) g
+WHERE e.name = 'undo_retention'
+  AND f.name = 'db_block_size'
+;
+
+--------------------------------------
+ACTUAL UNDO SIZE [MByte] 	UNDO RETENTION [Sec]	   OPTIMAL UNDO RETENTION [Sec]
+------------------------ 	------------------------- ----------------------------
+890				 			900						   7926
+----------------------------------------------------------------------------------
+
+//Формула для расчета размера undo табличного пространства:
+SELECT D.UNDO_SIZE / (1024 * 1024) "ACTUAL UNDO SIZE [MByte]",
+	SUBSTR (E.VALUE, 1, 25) "UNDO RETENTION [Sec]",
+	(TO_NUMBER (E.VALUE) * TO_NUMBER (F.VALUE) * G.UNDO_BLOCK_PER_SEC) / (1024 * 1024) "NEEDED UNDO SIZE [MByte]" 
+		FROM (SELECT SUM (A.BYTES) UNDO_SIZE
+			FROM V$DATAFILE A, V$TABLESPACE B, DBA_TABLESPACES C 
+				WHERE     C.CONTENTS = 'UNDO'
+					AND C.STATUS = 'ONLINE'
+					AND B.NAME = C.TABLESPACE_NAME
+					AND A.TS# = B.TS#)
+					D,
+					V$PARAMETER E,
+					V$PARAMETER F,
+					(SELECT MAX (UNDOBLKS / ( (END_TIME - BEGIN_TIME) * 3600 * 24)) UNDO_BLOCK_PER_SEC
+						FROM V$UNDOSTAT) G 	
+							WHERE E.NAME = 'undo_retention' 
+							AND F.NAME = 'db_block_size';
+---------------------------------------------------------------------------
+ACTUAL UNDO SIZE [MByte] UNDO RETENTION [Sec]	   NEEDED UNDO SIZE [MByte]
+------------------------ ------------------------- ------------------------
+890				 		 900					   101.0625
+---------------------------------------------------------------------------
+
+//посмотрим параметры undo
+show parameter undo;
+
+NAME				     TYPE	 VALUE
+------------------------------------ ----------- ------------------------------
+undo_management 		     string	 AUTO
+undo_retention			     integer	 900
+undo_tablespace 		     string	 UNDOTBS1
+--------------------------------------------------------------------------------
+
+//посмотрим самый длинный запрос, за последние 7 дней
+SELECT MAX(MAXQUERYLEN) FROM V$UNDOSTAT;
+
+MAX(MAXQUERYLEN)
+----------------
+	    1191
+---------------------------------------
+
+//посмотрим о табличном пространстве UNDOTBS1
+select * from DBA_TABLESPACES where TABLESPACE_NAME = 'UNDOTBS1';
+
+TABLESPACE_NAME 	       BLOCK_SIZE INITIAL_EXTENT NEXT_EXTENT MIN_EXTENTS	MAX_EXTENTS   MAX_SIZE PCT_INCREASE MIN_EXTLEN STATUS	 CONTENTS  LOGGING   FOR EXTENT_MAN ALLOCATIO PLU SEGMEN DEF_TAB_ RETENTION   BIG PREDICA ENC COMPRESS_FOR
+------------------------------ ---------- -------------- ----------- ---------------------- ---------- ------------ ---------- --------- --------- --------- ------------- --------- --- ------ -------- ----------- --- ------- ---------------
+UNDOTBS1			     8192	   65536		       1	2147483645 2147483645			 65536 ONLINE	 UNDO	   LOGGING   NO	LOCAL	   SYSTEM    NO  MANUAL DISABLED	NOGUARANTEE NO  HOST	 NO
+
+--------------------------------------------------------------------------------
+
+//изменим на 2 часа
+alter system set undo_retention = 7200;        
+
+System altered.
+
+-----------------------------------------------
+
+//вычислим табличное пространство с новым параметром по формуле выше
+ACTUAL UNDO SIZE [MByte] UNDO RETENTION [Sec]	   NEEDED UNDO SIZE [MByte]
+------------------------ ------------------------- ------------------------
+890						 7200					      808.5
+
+
